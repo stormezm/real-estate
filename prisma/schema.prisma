@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  email         String         @unique
+  password      String
+  otp           String?
+  otpExpiry     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  UserFund      UserFund[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  @@map("refresh_tokens")
+}
+
+model AdminRefreshToken {
+  id        Int       @id @default(autoincrement())
+  tokenHash String
+  adminId   Int
+  admin     Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  @@map("admin_refresh_tokens")
+}
+
+enum FundType {
+  MixedUse
+  Residential
+}
+
+enum FundStatus {
+  Active
+  Closed
+}
+
+enum CapitalCallStatus {
+  Pending
+  Paid
+  LatePayment
+}
+
+model Fund {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  startDate   DateTime   @default(now())
+  status      FundStatus @default(Active)
+  fundType    FundType
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  UserFund    UserFund[]
+
+  @@map("funds")
+}
+
+model UserFund {
+  id               Int        @id @default(autoincrement())
+  userId           Int
+  fundId           Int
+  investmentDate   DateTime
+  commitmentAmount Float
+  status           FundStatus
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fund               Fund                @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  capitalCalls       CapitalCall[]
+  distributions      Distribution[]
+  reports            reports[]
+
+  @@unique([userId, fundId])
+  @@map("user_funds")
+}
+
+model CapitalCall {
+  id           Int               @id @default(autoincrement())
+  userFundId   Int
+  amountCalled Float
+  callDate     DateTime
+  dueDate      DateTime
+  status       CapitalCallStatus
+  createdAt    DateTime          @default(now())
+
+  userFund UserFund @relation(fields: [userFundId], references: [id], onDelete: Cascade)
+
+  @@map("capital_calls")
+}
+
+model Distribution {
+  id               Int      @id @default(autoincrement())
+  userFundId       Int
+  distributionDate DateTime
+  amountPaid       Float
+  paymentMethod    String
+  statementUrl     String
+  createdAt        DateTime @default(now())
+
+  userFund UserFund @relation(fields: [userFundId], references: [id], onDelete: Cascade)
+
+  @@map("distributions")
+}
+model Admin {
+  id                Int                 @id @default(autoincrement())
+  username          String              @unique
+  email             String              @unique
+  password          String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  reports           reports[]
+  AdminRefreshToken AdminRefreshToken[]
+
+  @@map("admins")
+}
+
+model reports {
+  id         Int       @id @default(autoincrement())
+  title      String
+  type       String
+  body       String
+  reportDate DateTime
+  userFundId Int
+  userFund   UserFund  @relation(fields: [userFundId], references: [id])
+  fileUrl    String
+  createdBy  Int
+  admin      Admin     @relation(fields: [createdBy], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("reports")
+}

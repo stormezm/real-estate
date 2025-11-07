@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "funds" ALTER COLUMN "startDate" SET DEFAULT CURRENT_TIMESTAMP;
