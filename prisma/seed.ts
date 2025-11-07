@@ -281,19 +281,6 @@ async function main() {
     },
   ];
 
-  const performanceMetrics = await Promise.all(
-    performanceMetricsData.map(async (data) => {
-      const existing = await prisma.performanceMetrics.findUnique({
-        where: { userFundId: data.userFundId },
-      });
-      if (existing) {
-        return existing;
-      }
-      return prisma.performanceMetrics.create({ data });
-    }),
-  );
-  console.log(`✅ Created ${performanceMetrics.length} performance metrics`);
-
   console.log('🎉 Seed completed successfully!');
   console.log('\n📝 Summary:');
   console.log(`   - 1 Admin`);
@@ -302,7 +289,6 @@ async function main() {
   console.log(`   - ${userFunds.length} User-Fund relationships`);
   console.log(`   - ${capitalCalls.length} Capital Calls`);
   console.log(`   - ${distributions.length} Distributions`);
-  console.log(`   - ${performanceMetrics.length} Performance Metrics`);
   console.log('\n🔐 Default password for all users and admin: password123');
 }
 
