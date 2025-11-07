@@ -36,6 +36,7 @@ export class CalculateService {
     const distributionsPaid = userFund.distributions.reduce(
       (sum, dist) => sum + Number(dist.amountPaid || 0),
       0,
+      
     );
 
     // Calculate NAV (Net Asset Value)
